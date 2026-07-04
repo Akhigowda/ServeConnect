@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign up — ServeConnect</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="page">
+  <nav class="nav">
+    <a href="index.html" class="brand">Serve<span>Connect</span></a>
+    <div class="nav-links"><a href="login.html">Log in instead</a></div>
+  </nav>
+</div>
+
+<div class="auth-wrap">
+  <div class="card">
+    <h2>Create your account</h2>
+    <p class="sub">Tell us who you are and we'll set up the right dashboard.</p>
+
+    <div id="alertBox"></div>
+
+    <div class="role-toggle">
+      <div class="role-btn active" data-role="student" id="roleStudent">I'm a student</div>
+      <div class="role-btn" data-role="caterer" id="roleCaterer">I'm a caterer</div>
+    </div>
+
+    <form id="signupForm">
+      <div class="field">
+        <label>Full name</label>
+        <input type="text" id="full_name" required placeholder="Your full name">
+      </div>
+      <div class="field">
+        <label>Phone number</label>
+        <input type="tel" id="phone" required placeholder="10-digit mobile number">
+      </div>
+      <div class="field" id="collegeField">
+        <label>College name</label>
+        <input type="text" id="college_name" placeholder="e.g. Christ University">
+      </div>
+      <div class="field" id="businessField" style="display:none;">
+        <label>Business / catering company name</label>
+        <input type="text" id="business_name" placeholder="e.g. Spice Route Catering">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="password" required placeholder="At least 6 characters" minlength="6">
+      </div>
+      <button type="submit" class="btn btn-brass btn-full" id="submitBtn">Create account</button>
+    </form>
+
+    <div class="form-footer">Already have an account? <a href="login.html">Log in</a></div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+  let selectedRole = 'student';
+
+  // Pre-select role from URL param, e.g. signup.html?role=caterer
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('role') === 'caterer') {
+    selectRole('caterer');
+  }
+
+  document.getElementById('roleStudent').addEventListener('click', () => selectRole('student'));
+  document.getElementById('roleCaterer').addEventListener('click', () => selectRole('caterer'));
+
+  function selectRole(role) {
+    selectedRole = role;
+    document.getElementById('roleStudent').classList.toggle('active', role === 'student');
+    document.getElementById('roleCaterer').classList.toggle('active', role === 'caterer');
+    document.getElementById('collegeField').style.display = role === 'student' ? 'block' : 'none';
+    document.getElementById('businessField').style.display = role === 'caterer' ? 'block' : 'none';
+  }
+
+  document.getElementById('signupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const alertBox = document.getElementById('alertBox');
+    const submitBtn = document.getElementById('submitBtn');
+    alertBox.innerHTML = '';
+
+    const payload = {
+      role: selectedRole,
+      full_name: document.getElementById('full_name').value.trim(),
+      phone: document.getElementById('phone').value.trim(),
+      password: document.getElementById('password').value,
+      college_name: document.getElementById('college_name').value.trim(),
+      business_name: document.getElementById('business_name').value.trim()
+    };
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating account...';
+
+    try {
+      const data = await apiRequest('/auth/signup', { method: 'POST', body: payload, auth: false });
+      localStorage.setItem('sc_token', data.token);
+      localStorage.setItem('sc_user', JSON.stringify(data.user));
+      window.location.href = selectedRole === 'student' ? 'jobs.html' : 'my-jobs.html';
+    } catch (err) {
+      alertBox.innerHTML = `<div class="alert alert-error">${escapeHtml(err.message)}</div>`;
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Create account';
+    }
+  });
+</script>
+
+</body>
+</html>

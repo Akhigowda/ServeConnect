@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Post a job — ServeConnect</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="page">
+  <nav class="nav">
+    <a href="index.html" class="brand">Serve<span>Connect</span></a>
+    <div class="nav-links">
+      <a href="my-jobs.html">My jobs</a>
+      <a href="post-job.html">Post a job</a>
+      <a href="#" onclick="logout()">Log out</a>
+    </div>
+  </nav>
+</div>
+
+<div class="auth-wrap" style="max-width:520px;">
+  <div class="card">
+    <h2>Post a job</h2>
+    <p class="sub">Fill in the details — this goes live to students immediately.</p>
+
+    <div id="alertBox"></div>
+
+    <form id="jobForm">
+      <div class="field">
+        <label>Job title</label>
+        <input type="text" id="title" required placeholder="e.g. Waiters needed for wedding reception">
+      </div>
+      <div class="field">
+        <label>Description (optional)</label>
+        <textarea id="description" rows="3" placeholder="Dress code, specific duties, anything students should know"></textarea>
+      </div>
+      <div class="field">
+        <label>Event date</label>
+        <input type="date" id="event_date" required>
+      </div>
+      <div style="display:flex; gap:12px;">
+        <div class="field" style="flex:1;">
+          <label>Start time</label>
+          <input type="time" id="start_time" required>
+        </div>
+        <div class="field" style="flex:1;">
+          <label>End time</label>
+          <input type="time" id="end_time" required>
+        </div>
+      </div>
+      <div class="field">
+        <label>Location</label>
+        <input type="text" id="location" required placeholder="Venue name or area">
+      </div>
+      <div style="display:flex; gap:12px;">
+        <div class="field" style="flex:1;">
+          <label>Pay per worker (₹)</label>
+          <input type="number" id="pay_rate" required min="1" placeholder="e.g. 600">
+        </div>
+        <div class="field" style="flex:1;">
+          <label>Workers needed</label>
+          <input type="number" id="workers_needed" required min="1" placeholder="e.g. 8">
+        </div>
+      </div>
+      <button type="submit" class="btn btn-brass btn-full" id="submitBtn">Post job</button>
+    </form>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+  const user = requireLogin('caterer');
+
+  document.getElementById('jobForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const alertBox = document.getElementById('alertBox');
+    const submitBtn = document.getElementById('submitBtn');
+    alertBox.innerHTML = '';
+
+    const payload = {
+      title: document.getElementById('title').value.trim(),
+      description: document.getElementById('description').value.trim(),
+      event_date: document.getElementById('event_date').value,
+      start_time: document.getElementById('start_time').value,
+      end_time: document.getElementById('end_time').value,
+      location: document.getElementById('location').value.trim(),
+      pay_rate: parseFloat(document.getElementById('pay_rate').value),
+      workers_needed: parseInt(document.getElementById('workers_needed').value, 10)
+    };
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Posting...';
+
+    try {
+      await apiRequest('/jobs', { method: 'POST', body: payload });
+      window.location.href = 'my-jobs.html';
+    } catch (err) {
+      alertBox.innerHTML = `<div class="alert alert-error">${escapeHtml(err.message)}</div>`;
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Post job';
+    }
+  });
+</script>
+
+</body>
+</html>

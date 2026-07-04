@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log in — ServeConnect</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="page">
+  <nav class="nav">
+    <a href="index.html" class="brand">Serve<span>Connect</span></a>
+    <div class="nav-links"><a href="signup.html">Create account</a></div>
+  </nav>
+</div>
+
+<div class="auth-wrap">
+  <div class="card">
+    <h2>Welcome back</h2>
+    <p class="sub">Log in to manage your jobs or applications.</p>
+
+    <div id="alertBox"></div>
+
+    <form id="loginForm">
+      <div class="field">
+        <label>Phone number</label>
+        <input type="tel" id="phone" required placeholder="10-digit mobile number">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="password" required placeholder="Your password">
+      </div>
+      <button type="submit" class="btn btn-brass btn-full" id="submitBtn">Log in</button>
+    </form>
+
+    <div class="form-footer">New to ServeConnect? <a href="signup.html">Create an account</a></div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const alertBox = document.getElementById('alertBox');
+    const submitBtn = document.getElementById('submitBtn');
+    alertBox.innerHTML = '';
+
+    const payload = {
+      phone: document.getElementById('phone').value.trim(),
+      password: document.getElementById('password').value
+    };
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Logging in...';
+
+    try {
+      const data = await apiRequest('/auth/login', { method: 'POST', body: payload, auth: false });
+      localStorage.setItem('sc_token', data.token);
+      localStorage.setItem('sc_user', JSON.stringify(data.user));
+      window.location.href = data.user.role === 'student' ? 'jobs.html' : 'my-jobs.html';
+    } catch (err) {
+      alertBox.innerHTML = `<div class="alert alert-error">${escapeHtml(err.message)}</div>`;
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Log in';
+    }
+  });
+</script>
+
+</body>
+</html>
