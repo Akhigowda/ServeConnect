@@ -55,7 +55,7 @@
 
   function jobCard(job) {
     return `
-      <div class="job-card">
+      <div class="job-card" id="jobCard-${job.id}">
         <div class="pay">₹${Number(job.pay_rate).toLocaleString('en-IN')}</div>
         <h3>${escapeHtml(job.title)}</h3>
         <div class="job-meta">
@@ -65,10 +65,62 @@
         </div>
         <div class="job-card-footer">
           <span class="badge badge-${job.status}">${job.workers_confirmed}/${job.workers_needed} confirmed · ${job.status}</span>
-          <a href="job-detail.html?id=${job.id}" class="btn btn-outline btn-sm">View applicants</a>
+          <span class="badge badge-open">${job.applicants_count || 0} applicant${Number(job.applicants_count) === 1 ? '' : 's'}</span>
+          <button type="button" class="btn btn-outline btn-sm" onclick="viewApplicants('${job.id}')">View applicants</button>
         </div>
+        <div class="job-applicants" id="jobApplicants-${job.id}" style="display:none;"></div>
       </div>
     `;
+  }
+
+  function viewApplicants(jobId) {
+    const panel = document.getElementById(`jobApplicants-${jobId}`);
+    const button = document.querySelector(`#jobCard-${jobId} .btn-outline`);
+
+    if (!panel) return;
+
+    if (panel.dataset.loaded === 'true') {
+      const isHidden = panel.style.display === 'none';
+      panel.style.display = isHidden ? 'block' : 'none';
+      if (button) button.textContent = isHidden ? 'Hide applicants' : 'View applicants';
+      return;
+    }
+
+    panel.style.display = 'block';
+    panel.innerHTML = '<p style="margin:0; color:var(--text-muted);">Loading applicants...</p>';
+    if (button) button.textContent = 'Hide applicants';
+
+    apiRequest(`/applications/job/${jobId}`)
+      .then((data) => {
+        panel.dataset.loaded = 'true';
+        if (!data.applicants || data.applicants.length === 0) {
+          panel.innerHTML = '<div class="empty-state" style="margin-top:14px;"><h3>No applicants yet</h3><p>Students will show up here as they apply.</p></div>';
+          return;
+        }
+
+        panel.innerHTML = data.applicants.map((a) => `
+          <div class="applicant-row" style="margin-top:14px;">
+            <div class="applicant-info">
+              <span class="name">${escapeHtml(a.full_name)}</span>
+              <span class="meta">${escapeHtml(a.college_name || 'No college listed')} · ${escapeHtml(a.phone)} · ⭐ ${a.reliability_score || 'New'} · ${a.total_gigs_completed} gigs completed</span>
+            </div>
+            <div class="applicant-actions">
+              <span class="badge badge-${a.status}">${a.status.replace('_', ' ')}</span>
+              ${a.status === 'applied' ? `
+                <button class="btn btn-brass btn-sm" onclick="selectApplicant('${a.application_id}')">Select</button>
+                <button class="btn btn-outline btn-sm" onclick="rejectApplicant('${a.application_id}')">Reject</button>
+              ` : ''}
+              ${a.status === 'confirmed' ? `
+                <button class="btn btn-danger btn-sm" onclick="markNoShow('${a.application_id}')">Mark no-show</button>
+              ` : ''}
+            </div>
+          </div>
+        `).join('');
+      })
+      .catch((err) => {
+        panel.dataset.loaded = 'true';
+        panel.innerHTML = `<div class="alert alert-error" style="margin-top:14px;">${escapeHtml(err.message)}</div>`;
+      });
   }
 
   loadJobs();

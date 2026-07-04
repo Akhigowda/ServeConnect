@@ -251,7 +251,12 @@ a { color: inherit; }
 .job-meta { font-size: 13px; color: var(--text-muted); display: flex; flex-direction: column; gap: 4px; }
 .job-meta .row { display: flex; gap: 8px; align-items: center; }
 .job-card .desc { font-size: 14px; color: var(--charcoal); margin: 4px 0; }
-.job-card-footer { margin-top: auto; display: flex; justify-content: space-between; align-items: center; }
+.job-card-footer { margin-top: auto; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.job-applicants {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-soft);
+}
 
 .badge {
   display: inline-block;

@@ -26,7 +26,7 @@
   <div id="jobMeta" style="color:var(--text-muted); margin-bottom:24px;"></div>
   <div id="alertBox"></div>
 
-  <h3 style="font-family:var(--font-display);">Applicants</h3>
+  <h3 style="font-family:var(--font-display);">Applicants <span id="applicantCount"></span></h3>
   <div id="applicantsContainer"></div>
 
   <footer>ServeConnect · Built for caterers, event organizers, and the students who staff them.</footer>
@@ -55,6 +55,7 @@
 
   function renderApplicants(applicants) {
     const container = document.getElementById('applicantsContainer');
+    document.getElementById('applicantCount').textContent = `(${applicants.length})`;
     if (applicants.length === 0) {
       container.innerHTML = `<div class="empty-state"><h3>No applicants yet</h3><p>Students will show up here as they apply.</p></div>`;
       return;
