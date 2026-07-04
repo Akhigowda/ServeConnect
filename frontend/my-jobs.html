@@ -107,11 +107,11 @@
             <div class="applicant-actions">
               <span class="badge badge-${a.status}">${a.status.replace('_', ' ')}</span>
               ${a.status === 'applied' ? `
-                <button class="btn btn-brass btn-sm" onclick="selectApplicant('${a.application_id}')">Select</button>
-                <button class="btn btn-outline btn-sm" onclick="rejectApplicant('${a.application_id}')">Reject</button>
+                <button class="btn btn-brass btn-sm" onclick="selectApplicant('${a.application_id}', '${jobId}')">Select</button>
+                <button class="btn btn-outline btn-sm" onclick="rejectApplicant('${a.application_id}', '${jobId}')">Reject</button>
               ` : ''}
               ${a.status === 'confirmed' ? `
-                <button class="btn btn-danger btn-sm" onclick="markNoShow('${a.application_id}')">Mark no-show</button>
+                <button class="btn btn-danger btn-sm" onclick="markNoShow('${a.application_id}', '${jobId}')">Mark no-show</button>
               ` : ''}
             </div>
           </div>
@@ -121,6 +121,42 @@
         panel.dataset.loaded = 'true';
         panel.innerHTML = `<div class="alert alert-error" style="margin-top:14px;">${escapeHtml(err.message)}</div>`;
       });
+  }
+
+  function refreshApplicants(jobId) {
+    const panel = document.getElementById(`jobApplicants-${jobId}`);
+    if (panel) {
+      panel.dataset.loaded = '';
+      viewApplicants(jobId);
+    }
+  }
+
+  async function selectApplicant(applicationId, jobId) {
+    try {
+      await apiRequest(`/applications/${applicationId}/select`, { method: 'PATCH' });
+      refreshApplicants(jobId);
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  async function rejectApplicant(applicationId, jobId) {
+    try {
+      await apiRequest(`/applications/${applicationId}/reject`, { method: 'PATCH' });
+      refreshApplicants(jobId);
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  async function markNoShow(applicationId, jobId) {
+    if (!confirm('Mark this worker as a no-show? This affects their reliability score.')) return;
+    try {
+      await apiRequest(`/applications/${applicationId}/no-show`, { method: 'PATCH' });
+      refreshApplicants(jobId);
+    } catch (err) {
+      alert(err.message);
+    }
   }
 
   loadJobs();
