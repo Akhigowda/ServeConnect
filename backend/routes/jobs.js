@@ -39,16 +39,15 @@ router.get('/', requireAuth, async (req, res) => {
     const { location } = req.query;
     let query = `
       SELECT j.*, u.business_name, u.full_name AS caterer_name,
-             CASE
-               WHEN ? = 'student' AND a.id IS NOT NULL THEN 1
-               ELSE 0
-             END AS has_applied
+             (SELECT COUNT(*) FROM applications a WHERE a.job_id = j.id AND a.status != 'withdrawn') AS applicant_count,
+             a_me.id AS my_application_id,
+             a_me.status AS my_application_status
       FROM jobs j
       JOIN users u ON j.caterer_id = u.id
-      LEFT JOIN applications a ON a.job_id = j.id AND a.student_id = ?
+      LEFT JOIN applications a_me ON a_me.job_id = j.id AND a_me.student_id = ?
       WHERE j.status = 'open'
     `;
-    const params = [req.user.role, req.user.id];
+    const params = [req.user.id];
 
     if (location) {
       query += ' AND j.location LIKE ?';
@@ -74,15 +73,7 @@ router.get('/mine', requireAuth, requireRole('caterer'), async (req, res) => {
       'SELECT * FROM jobs WHERE caterer_id = ? ORDER BY created_at DESC',
       [req.user.id]
     );
-    const jobsWithCounts = await Promise.all(jobs.map(async (job) => {
-      const [countRows] = await pool.query(
-        'SELECT COUNT(*) AS applicants_count FROM applications WHERE job_id = ?',
-        [job.id]
-      );
-      return { ...job, applicants_count: countRows[0].applicants_count };
-    }));
-
-    res.json({ jobs: jobsWithCounts });
+    res.json({ jobs });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not fetch your jobs' });

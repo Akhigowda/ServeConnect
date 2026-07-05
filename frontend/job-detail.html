@@ -26,7 +26,7 @@
   <div id="jobMeta" style="color:var(--text-muted); margin-bottom:24px;"></div>
   <div id="alertBox"></div>
 
-  <h3 style="font-family:var(--font-display);">Applicants <span id="applicantCount"></span></h3>
+  <h3 style="font-family:var(--font-display);">Applicants</h3>
   <div id="applicantsContainer"></div>
 
   <footer>ServeConnect · Built for caterers, event organizers, and the students who staff them.</footer>
@@ -39,10 +39,13 @@
 
   if (!jobId) window.location.href = 'my-jobs.html';
 
+  let currentJobStatus = null;
+
   async function loadJob() {
     try {
       const data = await apiRequest(`/applications/job/${jobId}`);
       const job = data.job;
+      currentJobStatus = job.status;
       document.getElementById('jobTitle').textContent = job.title;
       document.getElementById('jobMeta').innerHTML =
         `📅 ${formatDate(job.event_date)} · 🕐 ${formatTime(job.start_time)}–${formatTime(job.end_time)} · 📍 ${escapeHtml(job.location)} · ₹${Number(job.pay_rate).toLocaleString('en-IN')} per worker ·
@@ -55,7 +58,6 @@
 
   function renderApplicants(applicants) {
     const container = document.getElementById('applicantsContainer');
-    document.getElementById('applicantCount').textContent = `(${applicants.length})`;
     if (applicants.length === 0) {
       container.innerHTML = `<div class="empty-state"><h3>No applicants yet</h3><p>Students will show up here as they apply.</p></div>`;
       return;
@@ -64,8 +66,11 @@
     container.innerHTML = applicants.map(a => `
       <div class="applicant-row">
         <div class="applicant-info">
-          <span class="name">${escapeHtml(a.full_name)}</span>
-          <span class="meta">${escapeHtml(a.college_name || 'No college listed')} · ${a.phone} · ⭐ ${a.reliability_score || 'New'} · ${a.total_gigs_completed} gigs completed</span>
+          <div class="avatar-chip">${a.full_name.charAt(0).toUpperCase()}</div>
+          <div class="name-block">
+            <span class="name">${escapeHtml(a.full_name)}</span>
+            <span class="meta">${escapeHtml(a.college_name || 'No college listed')} · ${a.phone} · ⭐ ${a.reliability_score || 'New'} · ${a.total_gigs_completed} gigs completed</span>
+          </div>
         </div>
         <div class="applicant-actions">
           <span class="badge badge-${a.status}">${a.status.replace('_', ' ')}</span>
@@ -73,8 +78,11 @@
             <button class="btn btn-brass btn-sm" onclick="selectApplicant('${a.application_id}')">Select</button>
             <button class="btn btn-outline btn-sm" onclick="rejectApplicant('${a.application_id}')">Reject</button>
           ` : ''}
-          ${a.status === 'confirmed' ? `
+          ${a.status === 'confirmed' && currentJobStatus !== 'completed' ? `
             <button class="btn btn-danger btn-sm" onclick="markNoShow('${a.application_id}')">Mark no-show</button>
+          ` : ''}
+          ${a.status === 'confirmed' && currentJobStatus === 'completed' ? `
+            <a class="btn btn-brass btn-sm" href="rate.html?job_id=${jobId}&to_user_id=${a.student_id}&to_name=${encodeURIComponent(a.full_name)}&return_to=job-detail.html?id=${jobId}">Rate student</a>
           ` : ''}
         </div>
       </div>

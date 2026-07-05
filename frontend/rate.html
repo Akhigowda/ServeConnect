@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rate your experience — ServeConnect</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .stars { display: flex; gap: 8px; margin-bottom: 20px; }
+  .star {
+    font-size: 34px;
+    cursor: pointer;
+    color: var(--border-soft);
+    transition: color 0.1s ease;
+  }
+  .star.filled { color: var(--brass); }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <nav class="nav">
+    <a href="index.html" class="brand">Serve<span>Connect</span></a>
+    <div class="nav-links"><a href="#" onclick="logout()">Log out</a></div>
+  </nav>
+</div>
+
+<div class="auth-wrap">
+  <div class="card">
+    <h2>Rate your experience</h2>
+    <p class="sub" id="ratingSub">How was working with them?</p>
+
+    <div id="alertBox"></div>
+
+    <form id="ratingForm">
+      <div class="field">
+        <label>Rating</label>
+        <div class="stars" id="starRow">
+          <span class="star" data-value="1">★</span>
+          <span class="star" data-value="2">★</span>
+          <span class="star" data-value="3">★</span>
+          <span class="star" data-value="4">★</span>
+          <span class="star" data-value="5">★</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Comment (optional)</label>
+        <textarea id="comment" rows="3" placeholder="Anything worth noting for others"></textarea>
+      </div>
+      <button type="submit" class="btn btn-brass btn-full" id="submitBtn" disabled>Submit rating</button>
+    </form>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+  const user = requireLogin();
+  const params = new URLSearchParams(window.location.search);
+  const jobId = params.get('job_id');
+  const toUserId = params.get('to_user_id');
+  const toName = params.get('to_name') || 'this person';
+  const returnTo = params.get('return_to') || (user.role === 'student' ? 'my-applications.html' : 'my-jobs.html');
+
+  if (!jobId || !toUserId) {
+    document.getElementById('alertBox').innerHTML = `<div class="alert alert-error">Missing job or user info. Go back and try again.</div>`;
+  }
+
+  document.getElementById('ratingSub').textContent = `Rate ${decodeURIComponent(toName)} for this job`;
+
+  let selectedScore = 0;
+  const stars = document.querySelectorAll('.star');
+
+  stars.forEach(star => {
+    star.addEventListener('click', () => {
+      selectedScore = parseInt(star.dataset.value, 10);
+      updateStars();
+      document.getElementById('submitBtn').disabled = false;
+    });
+  });
+
+  function updateStars() {
+    stars.forEach(s => {
+      s.classList.toggle('filled', parseInt(s.dataset.value, 10) <= selectedScore);
+    });
+  }
+
+  document.getElementById('ratingForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const alertBox = document.getElementById('alertBox');
+    const submitBtn = document.getElementById('submitBtn');
+    alertBox.innerHTML = '';
+
+    if (selectedScore === 0) {
+      alertBox.innerHTML = `<div class="alert alert-error">Please select a star rating</div>`;
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+
+    try {
+      await apiRequest('/ratings', {
+        method: 'POST',
+        body: {
+          job_id: jobId,
+          to_user_id: toUserId,
+          score: selectedScore,
+          comment: document.getElementById('comment').value.trim()
+        }
+      });
+      alertBox.innerHTML = `<div class="alert alert-success">Thanks for your feedback!</div>`;
+      setTimeout(() => { window.location.href = returnTo; }, 1200);
+    } catch (err) {
+      alertBox.innerHTML = `<div class="alert alert-error">${escapeHtml(err.message)}</div>`;
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit rating';
+    }
+  });
+</script>
+
+</body>
+</html>

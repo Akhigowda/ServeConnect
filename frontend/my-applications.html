@@ -65,6 +65,7 @@
             <span class="badge badge-${app.status}">${app.status.replace('_', ' ')}</span>
             ${isSelected && !deadlinePassed ? `<button class="btn btn-brass btn-sm" onclick="confirmApp('${app.application_id}')">Confirm</button>` : ''}
             ${['applied', 'selected'].includes(app.status) ? `<button class="btn btn-outline btn-sm" onclick="withdrawApp('${app.application_id}')">Withdraw</button>` : ''}
+            ${app.status === 'confirmed' && app.job_status === 'completed' ? `<a class="btn btn-brass btn-sm" href="rate.html?job_id=${app.job_id}&to_user_id=${app.caterer_id}&to_name=${encodeURIComponent(app.business_name || app.caterer_name)}&return_to=my-applications.html">Rate caterer</a>` : ''}
           </div>
         </div>
       `;

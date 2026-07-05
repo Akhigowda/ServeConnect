@@ -58,9 +58,8 @@
 
   function jobCard(job) {
     const spotsLeft = job.workers_needed - job.workers_confirmed;
-    const applyLabel = job.has_applied ? 'Applied ✓' : 'Apply';
-    const applyClass = job.has_applied ? 'btn btn-outline btn-sm' : 'btn btn-brass btn-sm';
-    const applyDisabled = job.has_applied ? 'disabled aria-disabled="true"' : '';
+    const hasApplied = !!job.my_application_id;
+    const applyLabel = hasApplied ? 'Applied' : 'Apply';
     return `
       <div class="job-card">
         <div class="pay">₹${Number(job.pay_rate).toLocaleString('en-IN')}</div>
@@ -73,8 +72,11 @@
         </div>
         ${job.description ? `<p class="desc">${escapeHtml(job.description)}</p>` : ''}
         <div class="job-card-footer">
-          <span class="badge badge-open">${spotsLeft} spot${spotsLeft === 1 ? '' : 's'} left</span>
-          <button class="${applyClass}" ${applyDisabled} onclick="applyToJob('${job.id}', this)">${applyLabel}</button>
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            <span class="badge badge-open">${spotsLeft} spot${spotsLeft === 1 ? '' : 's'} left</span>
+            ${job.applicant_count > 0 ? `<span style="font-size:12px; color:var(--text-muted);">${job.applicant_count} applied</span>` : ''}
+          </div>
+          <button class="btn ${hasApplied ? 'btn-outline' : 'btn-brass'} btn-sm" ${hasApplied ? 'disabled' : `onclick="applyToJob('${job.id}', this)"`}>${applyLabel}</button>
         </div>
       </div>
     `;
@@ -88,16 +90,8 @@
       btn.textContent = 'Applied ✓';
       btn.classList.remove('btn-brass');
       btn.classList.add('btn-outline');
-      btn.setAttribute('aria-disabled', 'true');
     } catch (err) {
       alert(err.message);
-      if (err.message.toLowerCase().includes('already applied')) {
-        btn.textContent = 'Applied ✓';
-        btn.classList.remove('btn-brass');
-        btn.classList.add('btn-outline');
-        btn.setAttribute('aria-disabled', 'true');
-        return;
-      }
       btn.disabled = false;
       btn.textContent = 'Apply';
     }

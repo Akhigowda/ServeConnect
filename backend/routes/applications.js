@@ -76,6 +76,7 @@ router.get('/mine', requireAuth, requireRole('student'), async (req, res) => {
     const [applications] = await pool.query(
       `SELECT a.id AS application_id, a.status, a.applied_at, a.confirmation_deadline,
               j.id AS job_id, j.title, j.event_date, j.start_time, j.end_time, j.location, j.pay_rate,
+              j.status AS job_status, j.caterer_id,
               u.business_name, u.full_name AS caterer_name
        FROM applications a
        JOIN jobs j ON a.job_id = j.id

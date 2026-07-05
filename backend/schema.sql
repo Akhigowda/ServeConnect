@@ -2,8 +2,8 @@
 -- ServeConnect Database Schema (MySQL)
 -- ============================================
 
-CREATE DATABASE IF NOT EXISTS serve_connect;
-USE serve_connect;
+CREATE DATABASE IF NOT EXISTS serveconnect;
+USE serveconnect;
 
 -- ============================================
 -- USERS
@@ -38,7 +38,7 @@ CREATE TABLE jobs (
   pay_rate DECIMAL(10,2) NOT NULL,
   workers_needed INT NOT NULL,
   workers_confirmed INT DEFAULT 0,
-  status ENUM('open', 'filled', 'closed', 'cancelled') DEFAULT 'open',
+  status ENUM('open', 'filled', 'closed', 'cancelled', 'completed') DEFAULT 'open',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (caterer_id) REFERENCES users(id) ON DELETE CASCADE
 );
