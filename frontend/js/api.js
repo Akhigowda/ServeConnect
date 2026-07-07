@@ -64,6 +64,21 @@ function formatTime(timeStr) {
   return `${displayHour}:${m} ${period}`;
 }
 
+function getJobEndDateTime(job) {
+  if (!job || !job.event_date) return null;
+  const endTime = job.end_time || '00:00:00';
+  const endDateTime = new Date(`${job.event_date}T${endTime}`);
+  return Number.isNaN(endDateTime.getTime()) ? null : endDateTime;
+}
+
+function isJobCompleted(job) {
+  if (!job) return false;
+  if (job.status === 'completed') return true;
+
+  const endDateTime = getJobEndDateTime(job);
+  return endDateTime ? endDateTime < new Date() : false;
+}
+
 function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str ?? '';

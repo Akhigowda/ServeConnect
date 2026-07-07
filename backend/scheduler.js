@@ -18,12 +18,14 @@ async function expireStaleSelections() {
 }
 
 // Marks jobs as 'completed' once their event date has passed, so the rating flow can trigger.
+// Marks jobs as 'completed' once their end time has actually passed, so the rating flow can trigger.
 async function completePastJobs() {
   try {
     const [result] = await pool.query(
       `UPDATE jobs
        SET status = 'completed'
-       WHERE status IN ('open', 'filled') AND event_date < CURDATE()`
+       WHERE status IN ('open', 'filled')
+       AND TIMESTAMP(event_date, end_time) < NOW()`
     );
     if (result.affectedRows > 0) {
       console.log(`[scheduler] Marked ${result.affectedRows} job(s) as completed`);

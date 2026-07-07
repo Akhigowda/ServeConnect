@@ -53,19 +53,22 @@
     container.innerHTML = apps.map(app => {
       const isSelected = app.status === 'selected';
       const deadlinePassed = app.confirmation_deadline && new Date(app.confirmation_deadline) < new Date();
+      const canRateCaterer = app.status === 'confirmed' && isJobCompleted(app);
 
       return `
         <div class="applicant-row">
           <div class="applicant-info">
-            <span class="name">${escapeHtml(app.title)}</span>
-            <span class="meta">${escapeHtml(app.business_name || app.caterer_name)} · ${formatDate(app.event_date)}, ${formatTime(app.start_time)}–${formatTime(app.end_time)} · ${escapeHtml(app.location)} · ₹${Number(app.pay_rate).toLocaleString('en-IN')}</span>
-            ${isSelected && !deadlinePassed ? `<span class="meta" style="color:var(--red-alert);">Confirm by ${new Date(app.confirmation_deadline).toLocaleString('en-IN')}</span>` : ''}
+            <div class="name-block">
+              <span class="name">${escapeHtml(app.title)}</span>
+              <span class="meta">${escapeHtml(app.business_name || app.caterer_name)} · ${formatDate(app.event_date)}, ${formatTime(app.start_time)}–${formatTime(app.end_time)} · ${escapeHtml(app.location)} · ₹${Number(app.pay_rate).toLocaleString('en-IN')}</span>
+              ${isSelected && !deadlinePassed ? `<span class="meta" style="color:var(--red-alert);">Confirm by ${new Date(app.confirmation_deadline).toLocaleString('en-IN')}</span>` : ''}
+            </div>
           </div>
           <div class="applicant-actions">
             <span class="badge badge-${app.status}">${app.status.replace('_', ' ')}</span>
             ${isSelected && !deadlinePassed ? `<button class="btn btn-brass btn-sm" onclick="confirmApp('${app.application_id}')">Confirm</button>` : ''}
             ${['applied', 'selected'].includes(app.status) ? `<button class="btn btn-outline btn-sm" onclick="withdrawApp('${app.application_id}')">Withdraw</button>` : ''}
-            ${app.status === 'confirmed' && app.job_status === 'completed' ? `<a class="btn btn-brass btn-sm" href="rate.html?job_id=${app.job_id}&to_user_id=${app.caterer_id}&to_name=${encodeURIComponent(app.business_name || app.caterer_name)}&return_to=my-applications.html">Rate caterer</a>` : ''}
+            ${canRateCaterer ? `<a class="btn btn-brass btn-sm" href="rate.html?job_id=${app.job_id}&to_user_id=${app.caterer_id}&to_name=${encodeURIComponent(app.business_name || app.caterer_name)}&return_to=my-applications.html">Rate caterer</a>` : ''}
           </div>
         </div>
       `;

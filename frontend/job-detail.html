@@ -40,11 +40,13 @@
   if (!jobId) window.location.href = 'my-jobs.html';
 
   let currentJobStatus = null;
+  let currentJob = null;
 
   async function loadJob() {
     try {
       const data = await apiRequest(`/applications/job/${jobId}`);
       const job = data.job;
+      currentJob = job;
       currentJobStatus = job.status;
       document.getElementById('jobTitle').textContent = job.title;
       document.getElementById('jobMeta').innerHTML =
@@ -63,6 +65,8 @@
       return;
     }
 
+    const jobIsCompleted = isJobCompleted(currentJob || { status: currentJobStatus });
+
     container.innerHTML = applicants.map(a => `
       <div class="applicant-row">
         <div class="applicant-info">
@@ -78,10 +82,10 @@
             <button class="btn btn-brass btn-sm" onclick="selectApplicant('${a.application_id}')">Select</button>
             <button class="btn btn-outline btn-sm" onclick="rejectApplicant('${a.application_id}')">Reject</button>
           ` : ''}
-          ${a.status === 'confirmed' && currentJobStatus !== 'completed' ? `
+          ${a.status === 'confirmed' && !jobIsCompleted ? `
             <button class="btn btn-danger btn-sm" onclick="markNoShow('${a.application_id}')">Mark no-show</button>
           ` : ''}
-          ${a.status === 'confirmed' && currentJobStatus === 'completed' ? `
+          ${a.status === 'confirmed' && jobIsCompleted ? `
             <a class="btn btn-brass btn-sm" href="rate.html?job_id=${jobId}&to_user_id=${a.student_id}&to_name=${encodeURIComponent(a.full_name)}&return_to=job-detail.html?id=${jobId}">Rate student</a>
           ` : ''}
         </div>
